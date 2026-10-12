@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f2328">
+<title>Akosh design — mebel yig'ish</title>
+<style>
+  :root {
+    --bar: #1f2328; --bar-text: #fff; --bar-muted: #aab1b9;
+    --bg: #eef0f2; --card: #fff; --line: #e3e5e8; --text: #1f2328; --muted: #67707a;
+    --accent: #ff6a00; --accent-soft: #fff1e6;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+               font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overscroll-behavior: none; }
+  #app { height: 100dvh; display: flex; flex-direction: column; }
+  header { background: var(--bar); color: var(--bar-text); display: flex; align-items: center; gap: 12px;
+           padding: max(10px, env(safe-area-inset-top)) 16px 10px; }
+  header .order { flex: 1; min-width: 0; }
+  header .b { color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  header .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  header .s { color: var(--bar-muted); font-size: 12px; }
+  header button { background: #353b42; color: #fff; border: 0; border-radius: 8px; padding: 8px 12px; font: inherit; font-size: 14px; }
+  .stage { position: relative; flex: 1; min-height: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .views { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .views button { min-width: 64px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: rgba(255,255,255,.92);
+                  font: inherit; font-size: 13px; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .views button.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+         padding: 24px; color: var(--muted); font-size: 16px; background: var(--bg); }
+  .msg.err { color: #b42318; }
+  .hidden { display: none !important; }
+  .card { background: var(--card); border-top: 1px solid var(--line); padding: 12px 16px max(12px, env(safe-area-inset-bottom)); }
+  .head { display: flex; align-items: center; gap: 12px; }
+  .badge { flex: none; background: var(--accent); color: #fff; font-weight: 800; font-size: 26px; line-height: 1; padding: 10px 12px;
+           border-radius: 10px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .badge.none { background: #c9ced4; }
+  .titles { flex: 1; min-width: 0; }
+  .name { font-weight: 700; font-size: 17px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+          -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .count { color: var(--muted); font-size: 13px; }
+  .nav { flex: none; width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: #fff; font-size: 22px;
+         color: var(--text); display: grid; place-items: center; padding: 0; }
+  .nav:disabled { opacity: .35; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin: 12px 0 0; }
+  .facts div { min-width: 0; }
+  .facts dt { font-size: 12px; color: var(--muted); }
+  .facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+  .facts .wide { grid-column: 1 / -1; }
+  .sheet { position: fixed; inset: 0; background: rgba(15,18,22,.45); display: flex; align-items: flex-end; z-index: 5; }
+  .sheet .panel { background: #fff; width: 100%; max-height: 80dvh; border-radius: 14px 14px 0 0; display: flex; flex-direction: column; }
+  .sheet .panel-head { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  .sheet .panel-head span { flex: 1; }
+  .sheet .panel-head button { border: 0; background: #f0f1f3; border-radius: 8px; padding: 8px 12px; font: inherit; }
+  .sheet ul { list-style: none; margin: 0; padding: 0 0 env(safe-area-inset-bottom); overflow: auto; }
+  .sheet li.group { padding: 10px 16px 4px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .sheet li.item { display: flex; gap: 12px; align-items: center; padding: 10px 16px; border-bottom: 1px solid #f1f2f4; cursor: pointer; }
+  .sheet li.item.on { background: var(--accent-soft); }
+  .sheet li.item b { flex: none; min-width: 48px; font-variant-numeric: tabular-nums; }
+  .sheet li.item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sheet li.item small { color: var(--muted); white-space: nowrap; }
+  @media (min-width: 820px) {
+    .card { position: absolute; left: 16px; bottom: 16px; width: 400px; border: 1px solid var(--line); border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    .sheet { align-items: center; justify-content: center; }
+    .sheet .panel { width: 440px; border-radius: 14px; }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="order">
+      <div class="b">Akosh design</div>
+      <div class="t" id="order-title">Mebel yig'ish</div>
+      <div class="s" id="order-sub"></div>
+    </div>
+    <button id="list-btn" class="hidden">Ro'yxat</button>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+    <div class="views hidden" id="views">
+      <button data-view="all">Hammasi</button>
+      <button data-view="part">Detal</button>
+      <button data-view="front">Old</button>
+      <button data-view="side">Yon</button>
+      <button data-view="top">Ust</button>
+    </div>
+    <div class="msg" id="msg">Yuklanmoqda…</div>
+  </div>
+
+  <section class="card hidden" id="card">
+    <div class="head">
+      <button class="nav" id="prev" aria-label="Oldingi detal">‹</button>
+      <div class="badge" id="badge">—</div>
+      <div class="titles">
+        <div class="name" id="name"></div>
+        <div class="count" id="count"></div>
+      </div>
+      <button class="nav" id="next" aria-label="Keyingi detal">›</button>
+    </div>
+    <dl class="facts" id="facts">
+      <div><dt>O'lchami</dt><dd id="size"></dd></div>
+      <div><dt>Joyi</dt><dd id="where"></dd></div>
+      <div><dt>Holati</dt><dd id="orient"></dd></div>
+      <div><dt>Pastdan balandligi</dt><dd id="height"></dd></div>
+      <div class="wide"><dt>Modul</dt><dd id="module"></dd></div>
+    </dl>
+  </section>
+</div>
+
+<div class="sheet hidden" id="sheet">
+  <div class="panel">
+    <div class="panel-head"><span>Barcha detallar</span><button id="sheet-close">Yopish</button></div>
+    <ul id="list"></ul>
+  </div>
+</div>
+
+<script type="module" src="viewer.js"></script>
+</body>
+</html>
